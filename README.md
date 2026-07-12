@@ -285,7 +285,7 @@ my_schema = "my_package.schemas:register"
 my_storage = "my_package.storage:register"
 ```
 
-项目还包含供 Codex、Claude Code 等编码 Agent 使用的 [`open-financial-data` Skill](skills/open-financial-data/SKILL.md)，可以将“检查数据是否最新”“修复失败任务”等自然语言请求映射到安全操作。
+项目还包含供编码 Agent 使用的 [`open-financial-data` Skill](skills/open-financial-data/SKILL.md)，可以将“检查数据是否最新”“修复失败任务”等自然语言请求映射到安全操作。仓库通过 `.agents/skills/open-financial-data` 为 Codex 提供项目级自动发现，并通过 `.claude/skills/open-financial-data` 接入 Claude Code；两者指向同一份 Skill，避免使用说明发生漂移。
 
 ## 可靠性原则
 
