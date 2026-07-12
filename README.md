@@ -1,5 +1,9 @@
 # OpenFinancialData
 
+<p align="center">
+  <img src="assets/open-financial-data-banner.png" alt="OpenFinancialData — Any provider. One financial data standard." width="100%">
+</p>
+
 <div align="center">
 
 **Any provider. One financial data standard.**
