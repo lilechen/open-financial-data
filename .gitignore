@@ -1,0 +1,24 @@
+.DS_Store
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+dist/
+build/
+*.egg-info/
+
+# OFD runtime and local financial data
+.ofd/
+.local/
+data/
+manifests/
+*.duckdb
+*.db
+*.parquet
+
+# Secrets
+.env
+.env.*
+!.env.example

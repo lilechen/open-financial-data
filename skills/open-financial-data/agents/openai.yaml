@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenFinancialData"
+  short_description: "Operate and develop OFD through natural language"
+  default_prompt: "Use $open-financial-data to inspect this OFD project and help me update or diagnose its financial data."

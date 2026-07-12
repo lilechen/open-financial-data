@@ -1,0 +1,59 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "open-financial-data"
+version = "0.1.0"
+description = "A schema-first, provider-agnostic, local-first financial data platform"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+license = { text = "Apache-2.0" }
+authors = [{ name = "OpenFinancialData contributors" }]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Office/Business :: Financial",
+]
+dependencies = [
+  "pydantic>=2.8,<3",
+  "typer>=0.12,<1",
+  "rich>=13.7,<15",
+  "PyYAML>=6.0,<7",
+  "pyarrow>=17,<22",
+]
+
+[project.optional-dependencies]
+akshare = ["akshare>=1.16"]
+tushare = ["tushare>=1.4"]
+duckdb = ["duckdb>=1.1,<2"]
+polars = ["polars>=1.0,<2"]
+dev = [
+  "pytest>=8",
+  "ruff>=0.5",
+  "mypy>=1.11",
+  "types-PyYAML>=6.0",
+]
+
+[project.scripts]
+ofd = "open_financial_data.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/open_financial_data"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["yaml", "pyarrow", "pyarrow.*", "duckdb", "polars"]
+ignore_missing_imports = true
