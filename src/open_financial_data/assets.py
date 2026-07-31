@@ -61,6 +61,8 @@ class IdentifierResolver:
             raise IdentifierResolutionError(f"Unsupported Provider asset_id: {asset_id}")
         if provider == "akshare":
             return local_id
+        if provider == "akshare.sina":
+            return f"{self._MIC_TO_CN_SUFFIX[mic].lower()}{local_id}"
         if provider == "tushare":
             return f"{local_id}.{self._MIC_TO_CN_SUFFIX[mic]}"
         raise IdentifierResolutionError(f"No identifier resolver for Provider: {provider}")

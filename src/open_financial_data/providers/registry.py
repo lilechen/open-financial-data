@@ -59,6 +59,21 @@ def builtin_registry() -> ProviderRegistry:
     )
     registry.register(
         ProviderDescriptor(
+            provider="akshare",
+            adapter="akshare.equity_daily_sina",
+            mapping_version="1.0.0",
+            capabilities=(
+                Capability(
+                    dataset="market.equity.bar",
+                    markets=frozenset({"CN"}),
+                    frequencies=frozenset({Frequency.DAILY}),
+                    adjustments=frozenset({"none", "forward", "backward"}),
+                ),
+            ),
+        )
+    )
+    registry.register(
+        ProviderDescriptor(
             provider="tushare",
             adapter="tushare.equity_daily",
             mapping_version="1.0.0",

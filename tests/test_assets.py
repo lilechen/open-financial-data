@@ -22,3 +22,15 @@ def test_central_identifier_resolution_round_trip(
 def test_unknown_provider_identifier_is_rejected() -> None:
     with pytest.raises(IdentifierResolutionError):
         builtin_identifier_resolver.from_provider("unknown", "ABC")
+
+
+@pytest.mark.parametrize(
+    ("asset_id", "symbol"),
+    [
+        ("CN.XSHG.600000", "sh600000"),
+        ("CN.XSHE.000001", "sz000001"),
+        ("CN.XBSE.830001", "bj830001"),
+    ],
+)
+def test_akshare_sina_symbol_includes_exchange_prefix(asset_id: str, symbol: str) -> None:
+    assert builtin_identifier_resolver.to_provider("akshare.sina", asset_id) == symbol

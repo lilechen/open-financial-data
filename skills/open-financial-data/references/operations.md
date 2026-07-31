@@ -32,6 +32,20 @@
 | Compare overlapping Providers | `ofd compare-providers` | No |
 | Discover canonical data products | `ofd schema list/show` | No |
 
+## Built-in source fallback
+
+The `cn-equity-daily` preset ships with automatic fallback: the primary
+`akshare.equity_daily` (Eastmoney `stock_zh_a_hist`) is backed by
+`akshare.equity_daily_sina` (Sina `stock_zh_a_daily`) with
+`fallback_policy: automatic`. When the primary endpoint is unreachable, the
+CLI closes the failed run, starts a new run, and replays the whole planned
+range on Sina — no user action required. Lineage is preserved per batch:
+canonical rows record the actual `provider_endpoint` (`stock_zh_a_hist` or
+`stock_zh_a_daily`) and `run_id`, so mixed-history partitions remain
+auditable. `ofd update` therefore keeps working during an Eastmoney outage.
+Inspect the transition with `ofd audit --event provider.fallback.triggered`.
+
+
 ## Command discovery
 
 Never assume the design command exists. Discover the installed interface:

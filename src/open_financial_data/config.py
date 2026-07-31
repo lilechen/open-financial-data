@@ -213,7 +213,13 @@ class ProjectConfig(BaseModel):
                             frequency=Frequency.DAILY,
                             adjustment="none",
                         ),
-                        use=SourceUse(adapter="akshare.equity_daily"),
+                        use=SourceUse(
+                            adapter="akshare.equity_daily",
+                            fallback=(
+                                SourceCandidate(adapter="akshare.equity_daily_sina"),
+                            ),
+                            fallback_policy="automatic",
+                        ),
                     ),
                 )
             ),

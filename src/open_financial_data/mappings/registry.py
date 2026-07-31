@@ -68,7 +68,7 @@ def builtin_mapping_registry() -> MappingRegistry:
         return wrapper
 
     for adapter in (
-        "akshare.equity_daily", "tushare.equity_daily",
+        "akshare.equity_daily", "akshare.equity_daily_sina", "tushare.equity_daily",
         "file.equity_daily", "rest.equity_daily",
     ):
         registry.register(adapter, "market.equity.bar", cast(Mapping, map_equity_daily))

@@ -20,6 +20,10 @@ def load_adapter(name: str, options: dict[str, Any] | None = None) -> ProviderAd
         from .akshare import AkshareEquityDailyAdapter
 
         return AkshareEquityDailyAdapter(**options)
+    if name == "akshare.equity_daily_sina":
+        from .akshare import AkshareEquityDailySinaAdapter
+
+        return AkshareEquityDailySinaAdapter(**options)
     if name == "tushare.equity_daily":
         from .tushare import TushareEquityDailyAdapter
 

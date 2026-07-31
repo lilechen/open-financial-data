@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from open_financial_data.config import (
+    ProjectConfig,
     SourceMatch,
     SourceRoute,
     SourceUse,
@@ -66,4 +67,23 @@ def test_router_rejects_ambiguous_routes() -> None:
                 frequency=Frequency.DAILY,
             )
         )
+
+
+def test_cn_equity_daily_preset_resolves_automatic_sina_fallback() -> None:
+    config = ProjectConfig.create(name="cn-market", preset="cn-equity-daily")
+    resolved = SourceRouter(
+        config.sources.routes, builtin_registry()
+    ).resolve(
+        DataRequest(
+            dataset="market.equity.bar",
+            market="CN",
+            frequency=Frequency.DAILY,
+            adjustment="none",
+        )
+    )
+    assert resolved.descriptor.adapter == "akshare.equity_daily"
+    assert resolved.fallback_policy == "automatic"
+    assert len(resolved.fallback) == 1
+    fallback_descriptor, _ = resolved.fallback[0]
+    assert fallback_descriptor.adapter == "akshare.equity_daily_sina"
 
