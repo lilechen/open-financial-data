@@ -588,6 +588,7 @@ def _run_market_command(
                     resume_run_id=resume_run_id, provider_policy=provider_policy,
                     frequency=frequency, market=market, dataset_name=dataset,
                     rebuild_scope=rebuild_scope,
+                    continue_on_failure=(candidate_index + 1 >= len(candidates)),
                 )
                 break
             except (
@@ -681,6 +682,8 @@ def _run_market_command(
         actor_type="cli",
     )
     _emit(result, output_format)
+    if status_value == "partial":
+        raise typer.Exit(code=7)
 
 
 @app.command()

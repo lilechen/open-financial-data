@@ -30,6 +30,7 @@ def test_unknown_provider_identifier_is_rejected() -> None:
         ("CN.XSHG.600000", "sh600000"),
         ("CN.XSHE.000001", "sz000001"),
         ("CN.XBSE.830001", "bj830001"),
+        ("CN.XSHG.920016", "bj920016"),
     ],
 )
 def test_akshare_sina_symbol_includes_exchange_prefix(asset_id: str, symbol: str) -> None:

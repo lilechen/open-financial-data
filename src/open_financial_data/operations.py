@@ -2,22 +2,21 @@
 
 from __future__ import annotations
 
-from datetime import date
 import time
+from datetime import date
 from time import perf_counter
 from typing import Literal
 
-from .mappings.registry import builtin_mapping_registry
+import pyarrow as pa
+
 from .ids import new_id
-from .locking import ProjectLock
 from .landing import archive_raw_batch, load_raw_batch
+from .locking import ProjectLock
+from .mappings.registry import builtin_mapping_registry
 from .models import Frequency
 from .planning import DatePlan, plan_backfill, plan_bootstrap, plan_update
 from .progress import ProgressCallback, ProgressEvent
 from .project import Project
-from .quarantine import quarantine_batch
-from .rate_limit import RequestRateLimiter
-from .repair import replacement_scope, suspect_partitions
 from .providers import (
     DataRequest,
     FetchRequest,
@@ -25,9 +24,11 @@ from .providers import (
     RateLimitError,
     TemporaryProviderError,
 )
-from .storage_loader import load_storage_publisher
+from .quarantine import quarantine_batch
+from .rate_limit import RequestRateLimiter
+from .repair import replacement_scope, suspect_partitions
 from .schemas import builtin_schema_registry
-
+from .storage_loader import load_storage_publisher
 
 Operation = Literal["bootstrap", "update", "backfill", "repair", "rebuild"]
 
@@ -80,6 +81,7 @@ def run_equity_daily_operation(
     market: str = "CN",
     dataset_name: str = "market.equity.bar",
     rebuild_scope: str = "range",
+    continue_on_failure: bool = False,
 ) -> dict[str, object]:
     logical = DataRequest(
         dataset=dataset_name,
@@ -196,6 +198,7 @@ def run_equity_daily_operation(
     project.state.create_tasks(tasks)
     tables = []
     empty_tasks = 0
+    failed_tasks = 0
     retry_count = 0
     rate_limiter = RequestRateLimiter(project.config.execution.requests_per_second)
     landing_artifacts: list[dict[str, object]] = []
@@ -216,6 +219,7 @@ def run_equity_daily_operation(
                 end=plan.end,
             )
             attempts = 0
+            table: pa.Table | None = None
             project.trace_event(run_id=run_id, event="task.started", payload={
                 "task_id": task_id, "asset_id": asset_id, "provider": descriptor.provider,
             })
@@ -315,6 +319,8 @@ def run_equity_daily_operation(
                             payload={"task_id": task_id, "asset_id": asset_id,
                                      "error_type": type(error).__name__, "attempts": attempts},
                         )
+                        if continue_on_failure:
+                            break
                         raise
                     retry_count += 1
                     if on_progress is not None:
@@ -354,8 +360,12 @@ def run_equity_daily_operation(
                                      "error_type": type(error).__name__,
                                      "quarantine_path": str(quarantine_path)},
                         )
+                    if continue_on_failure:
+                        break
                     raise
-            if table.num_rows:
+            if table is None:
+                failed_tasks += 1
+            elif table.num_rows:
                 tables.append(table)
                 project.state.update_task(
                     task_id=task_id,
@@ -374,6 +384,10 @@ def run_equity_daily_operation(
                         total=len(tasks), asset_id=asset_id,
                     )
                 )
+        if failed_tasks and not tables:
+            raise TemporaryProviderError(
+                f"All {failed_tasks} fetch tasks failed; no data to publish"
+            )
         if on_progress is not None:
             on_progress(
                 ProgressEvent(phase="publishing", completed=len(tasks), total=len(tasks))
@@ -427,12 +441,15 @@ def run_equity_daily_operation(
             on_progress(
                 ProgressEvent(phase="completed", completed=len(tasks), total=len(tasks))
             )
-    return {
+    result: dict[str, object] = {
         **base,
         **published,
-        "succeeded_tasks": len(assets) - empty_tasks,
+        "succeeded_tasks": len(assets) - empty_tasks - failed_tasks,
         "empty_tasks": empty_tasks,
-        "failed_tasks": 0,
+        "failed_tasks": failed_tasks,
         "retry_count": retry_count,
         "landing_file_count": len(landing_artifacts),
     }
+    if failed_tasks:
+        result["status"] = "partial"
+    return result

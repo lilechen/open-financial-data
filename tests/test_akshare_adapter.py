@@ -112,3 +112,22 @@ def test_sina_adapter_rejects_non_daily_frequency() -> None:
             **weekly.model_dump(), asset_ids=("CN.XSHG.600000",),
             start=date(2024, 1, 2), end=date(2024, 1, 31),
         ))
+
+
+def test_sina_adapter_treats_unparseable_response_as_empty() -> None:
+    class EmptySina(FakeAkshare):
+        def stock_zh_a_daily(self, **kwargs: object) -> FakeFrame:
+            raise KeyError("date")
+
+    adapter = AkshareEquityDailySinaAdapter(EmptySina())
+    logical = DataRequest(dataset="market.equity.bar", market="CN", frequency=Frequency.DAILY)
+    batch = adapter.fetch(
+        FetchRequest(
+            **logical.model_dump(),
+            asset_ids=("CN.XSHG.689009",),
+            start=date(2024, 1, 2),
+            end=date(2024, 1, 3),
+        )
+    )
+    assert batch.endpoint == "stock_zh_a_daily"
+    assert batch.records == ()

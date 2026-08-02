@@ -106,6 +106,20 @@ class AkshareEquityDailySinaAdapter:
                 end_date=request.end.strftime("%Y%m%d"),
                 adjust=adjust,
             )
+        except (ValueError, KeyError):
+            # Sina returns an empty or unparseable response for assets with no
+            # data in the range (e.g. suspended/delisted). Treat as an empty
+            # batch so the run continues instead of failing the whole job;
+            # network-level errors still raise TemporaryProviderError below.
+            return RawBatch(
+                provider="akshare",
+                adapter="akshare.equity_daily_sina",
+                endpoint="stock_zh_a_daily",
+                asset_id=asset_id,
+                market="CN",
+                currency="CNY",
+                records=(),
+            )
         except Exception as error:
             raise TemporaryProviderError("AKShare Sina request failed") from error
         records = tuple(
