@@ -161,7 +161,7 @@ SPLIT_SCHEMA = _schema("corporate_action.equity.split", (
 ADJUSTMENT_FACTOR_SCHEMA = _schema("corporate_action.equity.adjustment_factor", (
     F("asset_id", "string"), F("trade_date", "date"),
     F("factor_type", "enum", enum_values=("forward", "backward")),
-    F("factor", "decimal", precision=30, scale=12),
+    F("factor", "decimal", precision=32, scale=20),
 ), ("asset_id", "trade_date", "factor_type", "provider"))
 ADJUSTMENT_FACTOR_SCHEMA = replace(
     ADJUSTMENT_FACTOR_SCHEMA,

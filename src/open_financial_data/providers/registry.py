@@ -131,6 +131,7 @@ def builtin_registry() -> ProviderRegistry:
         capabilities=(Capability(
             dataset="corporate_action.equity.adjustment_factor",
             markets=frozenset({"CN"}), frequencies=frozenset({Frequency.EVENT}),
+            adjustments=frozenset({"forward", "backward"}),
         ),),
     ))
     for adapter, dataset in (

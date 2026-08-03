@@ -6,6 +6,7 @@ import importlib
 from collections.abc import Mapping
 from typing import Any
 
+from ..assets import builtin_identifier_resolver
 from ..models import Frequency
 from .errors import TemporaryProviderError
 from .models import Capability, DataRequest, FetchRequest, ProviderDescriptor, RawBatch
@@ -13,12 +14,12 @@ from .models import Capability, DataRequest, FetchRequest, ProviderDescriptor, R
 
 class AkshareAdjustmentFactorAdapter:
     def __init__(
-        self, *, symbols: dict[str, str], factor_type: str,
+        self, *, symbols: dict[str, str] | None = None, factor_type: str,
         sdk: Any | None = None, market: str = "CN",
     ) -> None:
         if factor_type not in {"forward", "backward"}:
             raise ValueError("factor_type must be forward or backward")
-        self.symbols = dict(symbols)
+        self.symbols = dict(symbols or {})
         self.factor_type = factor_type
         self._sdk = sdk
         self.market = market
@@ -35,20 +36,28 @@ class AkshareAdjustmentFactorAdapter:
             capabilities=(Capability(
                 dataset="corporate_action.equity.adjustment_factor",
                 markets=frozenset({self.market}), frequencies=frozenset({Frequency.EVENT}),
+                adjustments=frozenset({self.factor_type}),
             ),),
         )
 
     def list_assets(self, request: DataRequest) -> tuple[str, ...]:
-        return tuple(sorted(self.symbols))
+        if self.symbols:
+            return tuple(sorted(self.symbols))
+        frame = self.sdk.stock_info_a_code_name()
+        codes = frame["code"].astype(str).tolist()
+        return tuple(sorted({builtin_identifier_resolver.from_provider("akshare", code) for code in codes}))
 
     def fetch(self, request: FetchRequest) -> RawBatch:
         if len(request.asset_ids) != 1:
             raise ValueError("Adjustment factor fetch accepts one asset")
         asset_id = request.asset_ids[0]
-        try:
-            symbol = self.symbols[asset_id]
-        except KeyError as error:
-            raise ValueError(f"No AKShare symbol configured for {asset_id}") from error
+        if self.symbols:
+            try:
+                symbol = self.symbols[asset_id]
+            except KeyError as error:
+                raise ValueError(f"No AKShare symbol configured for {asset_id}") from error
+        else:
+            symbol = builtin_identifier_resolver.to_provider("akshare.sina", asset_id)
         adjust = "qfq-factor" if self.factor_type == "forward" else "hfq-factor"
         try:
             frame = self.sdk.stock_zh_a_daily(
